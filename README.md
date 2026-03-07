@@ -2,7 +2,7 @@
 
 A data analysis project exploring patterns in public transport delays using a Jupyter notebook, exported visualizations, and HTML reports.
 
-## Project Overview 
+## Project Overview
 
 This project analyzes transport delay behavior across:
 - time of day
@@ -15,13 +15,29 @@ The notebook performs data loading, cleaning, exploratory analysis, and chart ge
 
 ## Project Structure
 
-- data/public_transport_delays.csv → source dataset
-- notebooks/Transport.ipynb → main analysis notebook
-- outputs/Transport.html → full notebook converted to HTML
-- outputs/visual_summary.html → styled narrative summary report
-- outputs/index.html → entry page linking key HTML outputs
-- outputs/*.png → generated chart files
-- visualisations/ → optional custom dashboard files
+```text
+Transport/
+├── data/
+│   └── public_transport_delays.csv
+├── notebooks/
+│   └── Transport.ipynb
+├── outputs/
+│   ├── index.html
+│   ├── Transport.html
+│   ├── visual_summary.html
+│   └── *.png
+├── README.md
+└── venv/
+```
+
+### What each part is for
+
+- **data/**: raw dataset used in the analysis.
+- **notebooks/Transport.ipynb**: complete EDA workflow (cleaning, analysis, visualization).
+- **outputs/Transport.html**: full notebook exported as a shareable HTML report.
+- **outputs/visual_summary.html**: narrative, styled summary of key findings.
+- **outputs/index.html**: quick entry page linking the HTML reports.
+- **outputs/*.png**: generated plot images used by the report.
 
 ## Quick Start
 
