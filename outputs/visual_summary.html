@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Why Is My Bus Late? — Transport Delay Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0d0d0d;
+      --paper: #f5f0e8;
+      --paper2: #ede8dc;
+      --accent: #c0392b;
+      --accent2: #2c7a4b;
+      --accent3: #1a4a7a;
+      --muted: #6b6560;
+      --rule: #c8c0b0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.4;
+    }
+
+    /* MASTHEAD */
+    .masthead {
+      border-bottom: 3px double var(--ink);
+      padding: 1.2rem 0 1rem;
+      text-align: center;
+      background: var(--paper);
+      position: relative;
+    }
+    .masthead::after {
+      content: '';
+      display: block;
+      height: 1px;
+      background: var(--ink);
+      margin-top: .4rem;
+    }
+    .issue-line {
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+    .masthead h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.2rem, 6vw, 4.8rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -.02em;
+    }
+    .masthead h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+    .deck {
+      font-size: clamp(.9rem, 1.4vw, 1.1rem);
+      color: var(--muted);
+      margin-top: .6rem;
+      font-style: italic;
+    }
+
+    /* LAYOUT */
+    .container {
+      width: min(1100px, 92vw);
+      margin: 0 auto;
+    }
+
+    /* CHAPTER */
+    .chapter {
+      padding: 3.5rem 0 2rem;
+      border-bottom: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    .chapter:last-of-type { border-bottom: none; }
+    .chapter-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .4rem;
+    }
+    .chapter-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 5rem;
+      line-height: 1;
+      color: var(--rule);
+      font-weight: 700;
+    }
+    .chapter-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.3rem, 2.5vw, 2rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .chapter-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .chapter-body p {
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      color: #2a2520;
+    }
+    .chapter-body p:last-child { margin-bottom: 0; }
+
+    /* PULL QUOTE */
+    .pull {
+      border-left: 4px solid var(--accent);
+      padding: .8rem 1.2rem;
+      margin: 1.5rem 0;
+      background: var(--paper2);
+      border-radius: 0 6px 6px 0;
+    }
+    .pull p {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-style: italic;
+      line-height: 1.5;
+      color: var(--ink) !important;
+      margin: 0 !important;
+    }
+
+    /* STAT STRIP */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1px;
+      background: var(--rule);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 2rem 0;
+    }
+    .stat {
+      background: var(--paper);
+      padding: 1.2rem 1rem;
+      text-align: center;
+    }
+    .stat-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: .3rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* VISUAL CARD */
+    .visual-card {
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+      background: white;
+    }
+    .visual-card img {
+      width: 100%;
+      display: block;
+    }
+    .visual-cap {
+      padding: .6rem .9rem;
+      background: var(--paper2);
+      font-size: .78rem;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      border-top: 1px solid var(--rule);
+    }
+
+    /* FINDINGS LIST */
+    .findings {
+      list-style: none;
+      margin: 1rem 0;
+    }
+    .findings li {
+      padding: .6rem 0 .6rem 1.6rem;
+      border-bottom: 1px solid var(--rule);
+      position: relative;
+      font-size: .97rem;
+    }
+    .findings li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .findings li:last-child { border-bottom: none; }
+
+    /* TAG */
+    .tag {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      border: 1px solid currentColor;
+      padding: .15rem .5rem;
+      border-radius: 3px;
+      margin-right: .3rem;
+    }
+    .tag.red { color: var(--accent); }
+    .tag.green { color: var(--accent2); }
+    .tag.blue { color: var(--accent3); }
+
+    /* CONCLUSION */
+    .conclusion {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 3rem 0;
+      margin-top: 3rem;
+    }
+    .conclusion .container { display: grid; grid-template-columns: 1fr 2fr; gap: 3rem; }
+    .conclusion h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.4rem, 3vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .conclusion h2 em { color: #f5c842; font-style: italic; }
+    .conclusion p { color: #c8c0b0; font-size: .97rem; margin-bottom: 1rem; }
+    .conclusion .findings li { border-color: #333; color: #c8c0b0; }
+    .conclusion .findings li::before { color: #f5c842; }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      color: var(--muted);
+      border-top: 1px solid var(--rule);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .chapter { animation: fadeUp .6s ease both; }
+    .chapter:nth-child(2) { animation-delay: .1s; }
+    .chapter:nth-child(3) { animation-delay: .2s; }
+    .chapter:nth-child(4) { animation-delay: .3s; }
+    .chapter:nth-child(5) { animation-delay: .4s; }
+
+    @media (max-width: 680px) {
+      .chapter { grid-template-columns: 1fr; gap: 1rem; }
+      .chapter-num { font-size: 3rem; }
+      .conclusion .container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MASTHEAD -->
+  <header class="masthead">
+    <div class="container">
+      <div class="issue-line">Public Transport Delay Study &nbsp;·&nbsp; 2,000 Trips &nbsp;·&nbsp; EDA Report</div>
+      <h1>Why Is My <em>Bus</em> Late?</h1>
+      <p class="deck">A data-driven investigation into what actually causes public transport delays — and what doesn't.</p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- CHAPTER 1 — THE DATA -->
+    <section class="chapter">
+      <div class="chapter-left">
+        <div class="chapter-label">Chapter</div>
+        <div class="chapter-num">01</div>
+        <br>
+        <span class="tag blue">Setup</span>
+        <span class="tag green">Cleaning</span>
+      </div>
+      <div class="chapter-body">
+        <h2 class="chapter-title">2,000 Trips. One <em>Messy</em> Column.</h2>
+        <p>The dataset arrived with 2,000 recorded trips across buses, trams, trains and metros — spanning seasons, weather events, and a full calendar year. At first glance it looked clean. Shape was right, types made sense, and most columns returned zero nulls.</p>
+        <p>Then came <strong>event_type</strong>. 1,173 missing values — more than half the dataset. A less careful eye might flag this as a data quality problem and reach for a drop or a statistical fill. But the context told a different story.</p>
+        <div class="pull">
+          <p>"Missing doesn't always mean broken. Sometimes it means nothing happened — and that's the most important thing to record."</p>
+        </div>
+        <p>Those 1,173 blank rows weren't errors. They were trips that ran on ordinary days with no concert, no protest, no parade. Filling them with <code style="background:var(--paper2);padding:.1rem .3rem;border-radius:3px;font-family:'DM Mono',monospace;font-size:.85rem">"None"</code> turned ambiguity into signal — and preserved the integrity of every analysis that followed.</p>
+
+        <div class="stat-strip">
+          <div class="stat"><div class="stat-val">2,000</div><div class="stat-label">Total Trips</div></div>
+          <div class="stat"><div class="stat-val">23</div><div class="stat-label">Features</div></div>
+          <div class="stat"><div class="stat-val">1,173</div><div class="stat-label">Nulls Fixed</div></div>
+          <div class="stat"><div class="stat-val">0</div><div class="stat-label">Rows Dropped</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 2 — TRANSPORT TYPE -->
+    <section class="chapter">
+      <div class="chapter-left">
+        <div class="chapter-label">Chapter</div>
+        <div class="chapter-num">02</div>
+        <br>
+        <span class="tag red">Transport</span>
+      </div>
+      <div class="chapter-body">
+        <h2 class="chapter-title">Not All Vehicles Are <em>Equal</em></h2>
+        <p>The first question any commuter asks: which mode of transport is most likely to let me down? The box plot told the story clearly — delay distributions vary significantly across transport types, and the spread matters as much as the average.</p>
+        <p>Some modes showed tight, predictable delay windows. Others came with long tails — meaning when they're late, they're <em>very</em> late. That variance is the real cost to the passenger, not just the mean delay figure.</p>
+
+        <div class="visual-card">
+          <img src="boxplot_transport.png" alt="Delay Distribution by Transport Type" onerror="this.style.display='none'">
+          <div class="visual-cap">Fig 1 — Delay spread and outliers by transport mode. Width of box = consistency. Tails = worst-case scenarios.</div>
+        </div>
+
+        <div class="pull">
+          <p>"The average delay tells you what to expect. The tail tells you what to fear."</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 3 — WEATHER -->
+    <section class="chapter">
+      <div class="chapter-left">
+        <div class="chapter-label">Chapter</div>
+        <div class="chapter-num">03</div>
+        <br>
+        <span class="tag blue">Weather</span>
+      </div>
+      <div class="chapter-body">
+        <h2 class="chapter-title">Blame the <em>Weather</em>? The Data Has Thoughts.</h2>
+        <p>Weather is the go-to excuse when transport runs late. Storm rolls in, trains slow down — feels obvious. But when you break it down across every weather condition and cross it with transport type, the picture gets more complicated.</p>
+        <p>The grouped bar chart revealed that the same weather condition hits different transport modes very differently. A storm that cripples buses may barely affect the metro. That's not random — it reflects infrastructure, route exposure, and operational protocols baked into each system.</p>
+
+        <div class="visual-card">
+          <img src="weather_transport_grouped.png" alt="Weather and Transport Grouped" onerror="this.style.display='none'">
+          <div class="visual-cap">Fig 2 — Average delay by weather condition, split by transport type. The interaction effect is the real story.</div>
+        </div>
+
+        <div class="visual-card">
+          <img src="delay_by_weather.png" alt="Delay by Weather" onerror="this.style.display='none'">
+          <div class="visual-cap">Fig 3 — Ranked weather conditions by average arrival delay. Red = worst offenders.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 4 — TIME & EVENTS -->
+    <section class="chapter">
+      <div class="chapter-left">
+        <div class="chapter-label">Chapter</div>
+        <div class="chapter-num">04</div>
+        <br>
+        <span class="tag green">Time</span>
+        <span class="tag red">Events</span>
+      </div>
+      <div class="chapter-body">
+        <h2 class="chapter-title">The City Never Sleeps — But It <em>Does</em> Slow Down</h2>
+        <p>Time of day turned out to be one of the most revealing dimensions in the dataset. The line chart showed delay patterns that mirror the rhythm of city life — quiet in the early hours, building through the morning, shifting again in the evening.</p>
+
+        <div class="visual-card">
+          <img src="delay_by_hour.png" alt="Delay by Hour" onerror="this.style.display='none'">
+          <div class="visual-cap">Fig 4 — Average arrival delay by hour. The shape of this curve maps the city's daily pulse.</div>
+        </div>
+
+        <p>Then came the event question — the one that required cleaning first. With 1,173 "None" fills in place, the comparison was finally fair. The result was surprising.</p>
+
+        <div class="visual-card">
+          <img src="event_vs_no_event.png" alt="Event vs No Event" onerror="this.style.display='none'">
+          <div class="visual-cap">Fig 5 — Average delay on event days vs ordinary days. The difference is smaller than you'd think.</div>
+        </div>
+
+        <div class="pull">
+          <p>"Events move half a minute of delay. Rush hour moves far more. The city is its own worst disruption."</p>
+        </div>
+
+        <p>The gap between event and non-event days was roughly 0.5 minutes — statistically present, practically negligible. The assumption that a concert or a parade brings the transport network to its knees? The data doesn't support it.</p>
+      </div>
+    </section>
+
+    <!-- CHAPTER 5 — ROUTES -->
+    <section class="chapter">
+      <div class="chapter-left">
+        <div class="chapter-label">Chapter</div>
+        <div class="chapter-num">05</div>
+        <br>
+        <span class="tag red">Routes</span>
+      </div>
+      <div class="chapter-body">
+        <h2 class="chapter-title">Ten Routes. <em>Disproportionate</em> Pain.</h2>
+        <p>Aggregating by route cut through all the noise. Weather varies, events come and go, time of day shifts — but certain routes are consistently late regardless of conditions. These aren't unlucky corridors. They're structural problems.</p>
+
+        <div class="visual-card">
+          <img src="top_delayed_routes.png" alt="Top 10 Delayed Routes" onerror="this.style.display='none'">
+          <div class="visual-cap">Fig 6 — The 10 most delayed routes by average arrival delay. These are where investment should go first.</div>
+        </div>
+
+        <p>This chart is the most actionable output of the entire analysis. Every other finding describes patterns. This one names addresses. If a transport authority wanted to know where to intervene first, this is the answer.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CONCLUSION -->
+  <section class="conclusion">
+    <div class="container">
+      <div>
+        <h2>So, <em>What Actually</em> Causes Delays?</h2>
+      </div>
+      <div>
+        <p>After 2,000 trips, 23 features, and a dataset that looked clean until it didn't — here's what the data actually says:</p>
+        <ul class="findings">
+          <li>Weather interacts with transport type in ways that averages hide — the combination matters more than either variable alone.</li>
+          <li>Time of day is a stronger predictor of delay than whether a major event is happening nearby.</li>
+          <li>Events add roughly 0.5 minutes of average delay — a finding that challenges the common assumption.</li>
+          <li>A small number of routes carry a disproportionate share of the delay burden — and those are where structural fixes are needed.</li>
+          <li>The missing event_type values weren't noise — they were the majority of the data, and handling them correctly shaped every conclusion above.</li>
+        </ul>
+        <p style="margin-top:1.2rem; color:#94a3b8; font-size:.85rem;">Analysis performed in Python · pandas · matplotlib · seaborn · Jupyter</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Public Transport Delay EDA &nbsp;·&nbsp; Ian &nbsp;·&nbsp; 2025 &nbsp;·&nbsp; <a href="Transport.html" style="color:var(--muted)">View Full Notebook →</a>
+  </footer>
+
+</body>
+</html>
