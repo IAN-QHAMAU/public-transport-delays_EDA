@@ -2,6 +2,10 @@
 
 A data analysis project exploring patterns in public transport delays using a Jupyter notebook, exported visualizations, and HTML reports.
 
+## Live Demo
+
+- GitHub Pages: https://ian-qhamau.github.io/public-transport-delays_EDA/
+
 ## Project Overview
 
 This project analyzes transport delay behavior across:
@@ -70,6 +74,9 @@ After export, open:
 
 ## View Reports
 
+Live hosted version:
+- https://ian-qhamau.github.io/public-transport-delays_EDA/
+
 Open this file first for navigation:
 - outputs/index.html
 
@@ -129,3 +136,4 @@ Instead of treating late arrivals as isolated incidents, the EDA reframes delays
 ### Final takeaway
 
 The dataset tells a compelling story: reliability can be improved not by broad, expensive changes everywhere, but by **precision interventions where the data repeatedly points**. In short, this project converts raw delay records into a practical roadmap for smarter, more resilient public transport operations.
+
